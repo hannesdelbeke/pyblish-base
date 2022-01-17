@@ -1303,26 +1303,17 @@ def discover(type=None, regex=None, paths=None):
     # Include plug-ins from registered paths
     for path in paths or plugin_paths():
         path = os.path.normpath(path)
-        if not os.path.isdir(path):
-            log.debug("Skipped: \"%s\", path is not a valid folder", path)
+
+        if not plugin_path_is_valid(path):
             continue
 
         for fname in os.listdir(path):
-            if fname.startswith("_"):
-                log.debug("Skipped: \"%s\", starts with _", fname)
-                continue
 
-            abspath = os.path.join(path, fname)
-
-            if not os.path.isfile(abspath):
-                log.debug("Skipped: \"%s\", not a valid file", abspath)
+            if not plugin_file_is_valid(path, fname):
                 continue
 
             mod_name, mod_ext = os.path.splitext(fname)
-
-            if not mod_ext == ".py":
-                log.debug("Skipped: \"%s\",\"%s\", not end in .py", mod_name, mod_ext)
-                continue
+            abspath = os.path.join(path, fname)
 
             module = types.ModuleType(mod_name)
             module.__file__ = abspath
@@ -1406,6 +1397,33 @@ def plugins_from_module(module):
         plugins.append(obj)
 
     return plugins
+
+
+def plugin_path_is_valid(path):
+    if not os.path.isdir(path):
+        log.debug("Skipped: \"%s\", path is not a valid folder", path)
+        return False
+    return True
+
+
+def plugin_file_is_valid(path, fname):
+    if fname.startswith("_"):
+        log.debug("Skipped: \"%s\", starts with _", fname)
+        return False
+
+    abspath = os.path.join(path, fname)
+
+    if not os.path.isfile(abspath):
+        log.debug("Skipped: \"%s\", not a valid file", abspath)
+        return False
+
+    mod_name, mod_ext = os.path.splitext(fname)
+
+    if not mod_ext == ".py":
+        log.debug("Skipped: \"%s\",\"%s\", not end in .py", mod_name, mod_ext)
+        return False
+
+    return True
 
 
 def plugin_is_valid(plugin):
