@@ -1312,23 +1312,8 @@ def discover(type=None, regex=None, paths=None):
             if not plugin_file_is_valid(path, fname):
                 continue
 
-            mod_name, mod_ext = os.path.splitext(fname)
-            abspath = os.path.join(path, fname)
-
-            module = types.ModuleType(mod_name)
-            module.__file__ = abspath
-
-            try:
-                with open(abspath, "rb") as f:
-                    six.exec_(f.read(), module.__dict__)
-
-                # Store reference to original module, to avoid
-                # garbage collection from collecting it's global
-                # imports, such as `import os`.
-                sys.modules[abspath] = module
-
-            except Exception as err:
-                log.error("Skipped: \"%s\" (%s)", mod_name, err)
+            module = module_from_file(path, fname)
+            if not module:
                 continue
 
             for plugin in plugins_from_module(module):
@@ -1361,6 +1346,30 @@ def discover(type=None, regex=None, paths=None):
         filter_(plugins)
 
     return plugins
+
+
+def module_from_file(path, fname):
+    """Load module from file"""
+    mod_name, mod_ext = os.path.splitext(fname)
+    abspath = os.path.join(path, fname)
+
+    module = types.ModuleType(mod_name)
+    module.__file__ = abspath
+
+    try:
+        with open(abspath, "rb") as f:
+            six.exec_(f.read(), module.__dict__)
+
+        # Store reference to original module, to avoid
+        # garbage collection from collecting it's global
+        # imports, such as `import os`.
+        sys.modules[abspath] = module
+
+    except Exception as err:
+        log.error("Skipped: \"%s\" (%s)", mod_name, err)
+        return None
+
+    return module
 
 
 def plugins_from_module(module):
