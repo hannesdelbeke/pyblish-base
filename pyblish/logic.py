@@ -303,6 +303,19 @@ def instances_by_plugin(instances, plugin):
         families = [family] if family else []
         families += instance.data.get("families", [])
 
+        # TODO if converters are registered
+        #  we check if a matching converter exists for the plugin type
+        #  if so, we use it to convert the instance, and append this instead of the original instance
+
+        # find matchign convertor / adapter pattern
+        # adapter has
+        # - input type (ex. pymel mesh)
+        # - output type (ex. mesh name / string)
+        # - __name__, to register the converter
+        # - conversion function
+
+
+
         if algorithm(plugin.families, families):
             compatible.append(instance)
 
